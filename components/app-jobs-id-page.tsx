@@ -172,8 +172,12 @@ export function Page({ params }: { params: { id: string } }) {
                     </DialogHeader>
                     <form onSubmit={handleApply} className="space-y-4">
                       <div>
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input id="name" required />
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input id="firstName" required />
+                      </div>
+                      <div>
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input id="lastName" required />
                       </div>
                       <div>
                         <Label htmlFor="email">Email</Label>
