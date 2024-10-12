@@ -4,25 +4,15 @@ import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { BriefcaseIcon, UsersIcon, BarChartIcon, ShieldCheckIcon } from "lucide-react"
 import Image from "next/image"
+import { useTranslation } from '../hooks/useTranslation';
+import {Header} from '@/components/Header';
 
 export function LandingPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="flex items-center justify-between px-6 py-4 bg-white shadow-sm">
-        <div className="flex items-center space-x-4">
-          <BriefcaseIcon className="w-8 h-8 text-primary" />
-          <span className="text-2xl font-bold text-primary">JobPostPro</span>
-        </div>
-        <nav className="hidden md:flex space-x-4">
-          <Link href="/" className="text-gray-600 hover:text-primary">Home</Link>
-          <Link href="#features" className="text-gray-600 hover:text-primary">Features</Link>
-          <Link href="/pricing" className="text-gray-600 hover:text-primary">Pricing</Link>
-          <Link href="#contact" className="text-gray-600 hover:text-primary">Contact</Link>
-        </nav>
-        <Button asChild>
-          <Link href="/sign-up">Sign Up</Link>
-        </Button>
-      </header>
+      <Header />
 
       <main className="flex-grow">
         <section className="py-20 bg-gradient-to-r from-primary to-primary-dark text-white">

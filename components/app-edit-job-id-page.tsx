@@ -1,57 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BriefcaseIcon, Loader2 } from "lucide-react"
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { BriefcaseIcon } from "lucide-react"
 
-
-const genAI = new GoogleGenerativeAI("AIzaSyB2ho3rcsrs0ZWgElyNUkegB1fyY2yG5c0");
-
-const generateJobContent = async (jobTitle) => {
-  const prompt = `Generate a job description, requirements, and salary range for the position of ${jobTitle}. Format the response as JSON with keys "description", "requirements", and "salary".`
-
-  
-  try {
-    // Use the gemini-pro model
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const generatedText = response.text();
-
-    const jsonMatch = generatedText.match(/```json\n([\s\S]*?)\n```/);
-    if (!jsonMatch) {
-      throw new Error('Failed to extract JSON content');
-    }
-
-    const jsonContent = JSON.parse(jsonMatch[1]);
-
-    return {
-      description: jsonContent.description || "Failed to generate description",
-      requirements: Array.isArray(jsonContent.requirements) 
-        ? jsonContent.requirements.join('\n') 
-        : jsonContent.requirements || "Failed to generate requirements",
-      salary: jsonContent.salary 
-        ? `${jsonContent.salary.currency} ${jsonContent.salary.min} - ${jsonContent.salary.max} per year`
-        : "Competitive salary based on experience",
-    };
-  } catch (error) {
-    console.error('Error generating job content:', error);
-    return {
-      description: "An error occurred while generating the job description.",
-      requirements: "An error occurred while generating the job requirements.",
-      salary: "Competitive salary based on experience",
-    };
+// Mock function to fetch job data
+const fetchJobData = async (id) => {
+  // In a real application, this would be an API call
+  return {
+    id,
+    title: 'Software Engineer',
+    description: 'We are looking for a talented software engineer to join our team...',
+    location: 'San Francisco, CA',
+    salary: '$100,000 - $150,000',
+    type: 'full-time',
+    requirements: 'Bachelor\'s degree in Computer Science, 3+ years of experience...',
   }
 }
 
-export function PostJobPage() {
+
+export function EditJobComponent({ params }: { params: { id: string } }) {
+  const router = useRouter()
+  const { id } = params
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -61,7 +37,14 @@ export function PostJobPage() {
     requirements: '',
   })
   const [errors, setErrors] = useState({})
-  const [isGenerating, setIsGenerating] = useState(false)
+
+  useEffect(() => {
+    const loadJobData = async () => {
+      const jobData = await fetchJobData(id)
+      setFormData(jobData)
+    }
+    loadJobData()
+  }, [id])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -73,7 +56,7 @@ export function PostJobPage() {
   }
 
   const validateForm = () => {
-    const newErrors = {}
+    let newErrors = {}
     if (!formData.title) newErrors.title = 'Job title is required'
     if (!formData.description) newErrors.description = 'Job description is required'
     if (!formData.location) newErrors.location = 'Job location is required'
@@ -85,27 +68,11 @@ export function PostJobPage() {
   const handleSubmit = (e) => {
     e.preventDefault()
     if (validateForm()) {
-      console.log('Job posted:', formData)
-      alert('Job posted successfully!')
+      // In a real application, this would be an API call to update the job
+      console.log('Job updated:', formData)
+      alert('Job updated successfully!')
+      router.push('/jobs')
     }
-  }
-
-  const handleGenerate = async () => {
-    if (!formData.title) {
-      setErrors(prev => ({ ...prev, title: 'Job title is required for generation' }))
-      return
-    }
-
-    setIsGenerating(true)
-    const generatedContent = await generateJobContent(formData.title)
-    setIsGenerating(false)
-
-    setFormData(prev => ({
-      ...prev,
-      description: generatedContent.description,
-      requirements: generatedContent.requirements,
-      salary: generatedContent.salary,
-    }))
   }
 
   return (
@@ -123,22 +90,17 @@ export function PostJobPage() {
       </header>
 
       <main className="flex-grow container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold text-center mb-8">Post a New Job</h1>
+        <h1 className="text-3xl font-bold text-center mb-8">Edit Job Posting</h1>
         <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-6">
           <div className="space-y-2">
             <Label htmlFor="title">Job Title</Label>
-            <div className="flex space-x-2">
-              <Input
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                className={errors.title ? 'border-red-500' : ''}
-              />
-              <Button type="button" onClick={handleGenerate} disabled={isGenerating}>
-                {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Generate'}
-              </Button>
-            </div>
+            <Input
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              className={errors.title ? 'border-red-500' : ''}
+            />
             {errors.title && <p className="text-red-500 text-sm">{errors.title}</p>}
           </div>
 
@@ -180,7 +142,8 @@ export function PostJobPage() {
 
           <div className="space-y-2">
             <Label htmlFor="type">Job Type</Label>
-            <Select onValueChange={handleSelectChange}>
+            
+            <Select onValueChange={handleSelectChange} value={formData.type}>
               <SelectTrigger className={errors.type ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Select job type" />
               </SelectTrigger>
@@ -206,7 +169,12 @@ export function PostJobPage() {
             />
           </div>
 
-          <Button type="submit" className="w-full">Post Job</Button>
+          <div className="flex space-x-4">
+            <Button type="submit" className="flex-1">Update Job</Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => router.push('/jobs')}>
+              Cancel
+            </Button>
+          </div>
         </form>
       </main>
 

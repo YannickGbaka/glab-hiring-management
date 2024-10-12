@@ -16,7 +16,7 @@ const initialStats = {
 
 export default function Dashboard() {
   const [stats, setStats] = useState(initialStats)
-
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
   return (
     <div className="flex flex-col min-h-screen">
       <header className="flex items-center justify-between px-6 py-4 bg-white shadow-sm">
@@ -24,10 +24,36 @@ export default function Dashboard() {
           <BriefcaseIcon className="w-8 h-8 text-primary" />
           <span className="text-2xl font-bold text-primary">JobPostPro</span>
         </div>
-        <nav className="hidden md:flex space-x-4">
+        <nav className="hidden md:flex items-center space-x-4">
           <Link href="/dashboard" className="text-gray-600 hover:text-primary">Dashboard</Link>
-          <Link href="/jobs" className="text-gray-600 hover:text-primary">Manage Jobs</Link>
+          <Link href="/backoffice/jobs" className="text-gray-600 hover:text-primary">Manage Jobs</Link>
           <Link href="/post-job" className="text-gray-600 hover:text-primary">Post a Job</Link>
+          <div className="relative ml-4">
+            <Button
+              variant="ghost"
+              className="flex items-center space-x-2"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            >
+              <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center">
+                JD
+              </div>
+              <span className="text-sm">John Doe</span>
+            </Button>
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                <div className="px-4 py-2 text-sm text-gray-700">
+                  john@example.com
+                </div>
+                <div className="border-t border-gray-100"></div>
+                <button
+                  onClick={() => {/* Add logout logic here */}}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Log out
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
       </header>
 

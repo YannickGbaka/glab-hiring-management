@@ -1,5 +1,4 @@
-import { Jobs } from "@/components/app-jobs-page";
-
+import { FrontOfficeJobsComponent } from "@/components/app-job-listings-page"
 export default function JobsPage() {
-    return <Jobs />
+  return <FrontOfficeJobsComponent />
 }
