@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
@@ -9,11 +10,19 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BriefcaseIcon, Loader2 } from "lucide-react"
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
+import axios from 'axios';
+// Importez les composants Dialog
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 const genAI = new GoogleGenerativeAI("AIzaSyB2ho3rcsrs0ZWgElyNUkegB1fyY2yG5c0");
 
-const generateJobContent = async (jobTitle) => {
+const generateJobContent = async (jobTitle: string) => {
   const prompt = `Generate a job description, requirements, and salary range for the position of ${jobTitle}. Format the response as JSON with keys "description", "requirements", and "salary".`
 
   
@@ -51,44 +60,106 @@ const generateJobContent = async (jobTitle) => {
   }
 }
 
+// Définissez une interface pour formData
+interface FormData {
+  title: string;
+  description: string;
+  location: string;
+  salary: string;
+  jobType: string;
+  requirements: string;
+}
+
+// Définissez une interface pour les erreurs
+interface FormErrors {
+  title?: string;
+  description?: string;
+  location?: string;
+  jobType?: string;
+}
+
 export function PostJobPage() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     description: '',
     location: '',
     salary: '',
-    type: '',
+    jobType: '',
     requirements: '',
-  })
-  const [errors, setErrors] = useState({})
-  const [isGenerating, setIsGenerating] = useState(false)
+  });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
-  const handleSelectChange = (value) => {
-    setFormData(prev => ({ ...prev, type: value }))
-  }
+  const handleSelectChange = (value: string) => {
+    setFormData(prev => ({ ...prev, jobType: value }));
+  };
 
-  const validateForm = () => {
-    const newErrors = {}
-    if (!formData.title) newErrors.title = 'Job title is required'
-    if (!formData.description) newErrors.description = 'Job description is required'
-    if (!formData.location) newErrors.location = 'Job location is required'
-    if (!formData.type) newErrors.type = 'Job type is required'
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+  const validateForm = (): boolean => {
+    const newErrors: FormErrors = {};
+    if (!formData.title) newErrors.title = 'Job title is required';
+    if (!formData.description) newErrors.description = 'Job description is required';
+    if (!formData.location) newErrors.location = 'Job location is required';
+    if (!formData.jobType) newErrors.jobType = 'Job type is required';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log("Form submitted. Current formData:", formData);
     if (validateForm()) {
-      console.log('Job posted:', formData)
-      alert('Job posted successfully!')
+      try {
+        setIsGenerating(true);
+        console.log('Sending data to server:', formData);
+        const response = await axios.post('http://localhost:3001/api/jobs', formData);
+        console.log('Job posted:', response.data);
+        setIsModalOpen(true); // Ouvrir le modal au lieu d'afficher une alerte
+        setFormData({
+          title: '',
+          description: '',
+          location: '',
+          salary: '',
+          jobType: '',
+          requirements: '',
+        });
+        setErrors({});
+      } catch (error) {
+        console.error('Error posting job:', error);
+        if (axios.isAxiosError(error)) {
+          if (error.response) {
+            // The request was made and the server responded with a status code
+            // that falls out of the range of 2xx
+            console.error('Response data:', error.response.data);
+            console.error('Response status:', error.response.status);
+            console.error('Response headers:', error.response.headers);
+            alert(`Error: ${error.response.status} - ${error.response.data.message || 'Unknown error'}`);
+          } else if (error.request) {
+            // The request was made but no response was received
+            console.error('No response received:', error.request);
+            alert('Error: No response received from the server. Please check your network connection.');
+          } else {
+            // Something happened in setting up the request that triggered an Error
+            console.error('Error setting up the request:', error.message);
+            alert(`Error: ${error.message}`);
+          }
+        } else {
+          // Non-Axios error
+          console.error('Non-Axios error:', error);
+          alert('An unexpected error occurred. Please try again.');
+        }
+      } finally {
+        setIsGenerating(false);
+      }
+    } else {
+      console.log("Form validation failed. Errors:", errors);
     }
-  }
+  };
 
   const handleGenerate = async () => {
     if (!formData.title) {
@@ -179,9 +250,9 @@ export function PostJobPage() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="type">Job Type</Label>
+            <Label htmlFor="jobType">Job Type</Label>
             <Select onValueChange={handleSelectChange}>
-              <SelectTrigger className={errors.type ? 'border-red-500' : ''}>
+              <SelectTrigger className={errors.jobType ? 'border-red-500' : ''}>
                 <SelectValue placeholder="Select job type" />
               </SelectTrigger>
               <SelectContent>
@@ -191,7 +262,7 @@ export function PostJobPage() {
                 <SelectItem value="internship">Internship</SelectItem>
               </SelectContent>
             </Select>
-            {errors.type && <p className="text-red-500 text-sm">{errors.type}</p>}
+            {errors.jobType && <p className="text-red-500 text-sm">{errors.jobType}</p>}
           </div>
 
           <div className="space-y-2">
@@ -223,6 +294,18 @@ export function PostJobPage() {
           </nav>
         </div>
       </footer>
+
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Success!</DialogTitle>
+            <DialogDescription>
+              Your job has been posted successfully.
+            </DialogDescription>
+          </DialogHeader>
+          <Button onClick={() => setIsModalOpen(false)}>Close</Button>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

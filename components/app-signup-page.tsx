@@ -22,7 +22,7 @@ export function SignUp() {
     address: '',
     website: '',
   })
-  const [errors, setErrors] = useState({})
+  const [errors, setErrors] = useState<{ [key: string]: string }>({})
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -51,7 +51,7 @@ export function SignUp() {
     e.preventDefault()
     if (validateForm()) {
       try {
-        const response = await fetch('http://localhost:3001/api/users', {
+        const response = await fetch('http://localhost:3001/api/users/', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -81,7 +81,7 @@ export function SignUp() {
     }
   }
 
-  const handleSSOSignUp = (provider) => {
+  const handleSSOSignUp = (provider: string) => {
     // In a real application, this would initiate the SSO flow
     console.log(`Signing up with ${provider}`)
     alert(`SSO sign-up with ${provider} initiated. This is a mock implementation.`)

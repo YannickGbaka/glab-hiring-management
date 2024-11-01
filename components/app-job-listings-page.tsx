@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import axios from 'axios'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,67 +12,51 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { MapPinIcon, DollarSignIcon, ClockIcon, SearchIcon } from "lucide-react"
 import { Header } from '@/components/Header'
 
-// Mock data for job listings
-const jobListings = [
-  {
-    id: 1,
-    title: 'Senior Software Engineer',
-    company: 'TechCorp',
-    location: 'San Francisco, CA',
-    type: 'Full-time',
-    salary: 150000,
-    description: 'We are seeking a talented Senior Software Engineer to join our innovative team...',
-  },
-  {
-    id: 2,
-    title: 'Product Manager',
-    company: 'InnovateCo',
-    location: 'New York, NY',
-    type: 'Full-time',
-    salary: 120000,
-    description: 'Join our product team to lead the development of cutting-edge software solutions...',
-  },
-  {
-    id: 3,
-    title: 'UX Designer',
-    company: 'DesignHub',
-    location: 'Remote',
-    type: 'Contract',
-    salary: 100000,
-    description: 'We\'re looking for a creative UX Designer to help shape the future of our products...',
-  },
-  {
-    id: 4,
-    title: 'Data Scientist',
-    company: 'DataDriven',
-    location: 'Boston, MA',
-    type: 'Full-time',
-    salary: 140000,
-    description: 'Join our data science team to uncover insights and drive business decisions...',
-  },
-  {
-    id: 5,
-    title: 'Marketing Specialist',
-    company: 'GrowthGenius',
-    location: 'Chicago, IL',
-    type: 'Part-time',
-    salary: 60000,
-    description: 'Help us create and execute marketing strategies to drive customer acquisition...',
-  },
-]
+// Définissez une interface pour le type Job
+interface Job {
+  id: number;
+  title: string;
+  company: string;
+  location: string;
+  jobType: string;
+  salary: number;
+  description: string;
+}
 
 export function FrontOfficeJobsComponent() {
+  const [jobs, setJobs] = useState<Job[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedLocation, setSelectedLocation] = useState('all')
   const [selectedType, setSelectedType] = useState('all')
-  const [salaryRange, setSalaryRange] = useState([0, 200000])
+  const [salaryRange, setSalaryRange] = useState([0, 21000000])
 
-  const filteredJobs = jobListings.filter(job => {
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        setIsLoading(true)
+        const response = await axios.get('http://192.168.1.101:3001/api/jobs')
+        setJobs(response.data)
+        console.log(response.data)
+        setError(null)
+      } catch (err) {
+        console.error('Error fetching jobs:', err)
+        setError('Failed to fetch jobs. Please try again later.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchJobs()
+  }, [])
+
+  const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           job.description.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesLocation = selectedLocation === 'all' || job.location.includes(selectedLocation)
-    const matchesType = selectedType === 'all' || job.type === selectedType
+    const matchesType = selectedType === 'all' || job.jobType === selectedType
     const matchesSalary = job.salary >= salaryRange[0] && job.salary <= salaryRange[1]
 
     return matchesSearch && matchesLocation && matchesType && matchesSalary
@@ -143,38 +128,48 @@ export function FrontOfficeJobsComponent() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredJobs.map(job => (
-            <Card key={job.id} className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-xl">{job.title}</CardTitle>
-                <p className="text-gray-600">{job.company}</p>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <div className="flex items-center text-gray-600 mb-2">
-                  <MapPinIcon className="w-4 h-4 mr-2" />
-                  <span>{job.location}</span>
-                </div>
-                <div className="flex items-center text-gray-600 mb-2">
-                  <ClockIcon className="w-4 h-4 mr-2" />
-                  <span>{job.type}</span>
-                </div>
-                <div className="flex items-center text-gray-600 mb-4">
-                  <DollarSignIcon className="w-4 h-4 mr-2" />
-                  <span>${job.salary.toLocaleString()} per year</span>
-                </div>
-                <p className="text-sm text-gray-700">{job.description}</p>
-              </CardContent>
-              <CardFooter>
-                <Button asChild className="w-full">
-                  <Link href={`/jobs/${job.id}`}>View Details</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="text-center">
+            <p>Loading jobs...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center text-red-500">
+            <p>{error}</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredJobs.map(job => (
+              <Card key={job.id} className="flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-xl">{job.title}</CardTitle>
+                  <p className="text-gray-600">{job.company}</p>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  <div className="flex items-center text-gray-600 mb-2">
+                    <MapPinIcon className="w-4 h-4 mr-2" />
+                    <span>{job.location}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600 mb-2">
+                    <ClockIcon className="w-4 h-4 mr-2" />
+                    <span>{job.jobType}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600 mb-4">
+                    <DollarSignIcon className="w-4 h-4 mr-2" />
+                    <span>${job.salary.toLocaleString()} per year</span>
+                  </div>
+                  <p className="text-sm text-gray-700">{job.description}</p>
+                </CardContent>
+                <CardFooter>
+                  <Button asChild className="w-full">
+                    <Link href={`/jobs/${job.id}`}>View Details</Link>
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
 
-        {filteredJobs.length === 0 && (
+        {!isLoading && !error && filteredJobs.length === 0 && (
           <div className="text-center text-gray-600 mt-8">
             <p>No job listings found matching your criteria.</p>
           </div>
