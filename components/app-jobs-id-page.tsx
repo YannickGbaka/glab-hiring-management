@@ -7,55 +7,66 @@ import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { JobApplicationForm } from '@/components/JobApplicationForm'
-
-import { BriefcaseIcon, MapPinIcon, DollarSignIcon, ClockIcon, BuildingIcon, GlobeIcon, UsersIcon, LinkedinIcon, PhoneIcon } from "lucide-react"
+import { BriefcaseIcon, MapPinIcon, DollarSignIcon, ClockIcon } from "lucide-react"
 import axios from 'axios'
 
-// Remplacez la fonction fetchJobData par celle-ci
-const fetchJobData = async (id: string) => {
-    try {
-        const response = await axios.get(`http://192.168.1.101:3001/api/jobs/${id}`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching job data:', error);
-        throw error;
-    }
-};
+interface Job {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  jobType: string;
+  salary: string;
+  description: string;
+  requirements?: string;
+}
 
-export function Page({ params }: { params: { id: string } }) {
-    const router = useRouter()
-    const { id } = params
-    const [job, setJob] = useState<any>(null)
-    const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false)
+interface JobApplicationFormProps {
+  jobId: string;
+  jobTitle: string;
+  userId: string;
+}
+
+export default function JobDetailsPage({ params }: { params: { id: string } }) {
+    const router = useRouter();
+    const [job, setJob] = useState<Job | null>(null);
+    const [isApplyDialogOpen, setIsApplyDialogOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const loadJobData = async () => {
+        const fetchJob = async () => {
             try {
-                const jobData = await fetchJobData(id)
-                setJob(jobData)
-            } catch (error) {
-                console.error('Error fetching job data:', error)
-                // Gérer l'erreur (par exemple, afficher un message d'erreur à l'utilisateur)
+                setIsLoading(true);
+                const response = await axios.get(`http://localhost:3001/api/jobs/${params.id}`);
+                setJob(response.data);
+                setError(null);
+            } catch (err) {
+                console.error('Error fetching job:', err);
+                setError('Failed to load job details');
+            } finally {
+                setIsLoading(false);
             }
+        };
+
+        if (params.id) {
+            fetchJob();
         }
-        loadJobData()
-    }, [id])
+    }, [params.id]);
 
     const handleApply = (event: React.FormEvent) => {
-        event.preventDefault()
-        // Here you would typically send the application data to your backend
-        console.log('Application submitted')
-        setIsApplyDialogOpen(false)
-        // Show a success message or redirect the user
+        event.preventDefault();
+        console.log('Application submitted');
+        setIsApplyDialogOpen(false);
+    };
+
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
 
-    if (!job) {
-        return <div className="flex justify-center items-center h-screen">Loading...</div>
+    if (error || !job) {
+        return <div className="flex justify-center items-center h-screen text-red-500">{error || 'Job not found'}</div>;
     }
 
     return (
@@ -63,18 +74,20 @@ export function Page({ params }: { params: { id: string } }) {
             <header className="bg-white shadow-sm">
                 <div className="container mx-auto px-4 py-6">
                     <nav className="flex justify-between items-center">
-                        <Link href="/jobs" className="text-primary hover:underline">← Back to Job Listings</Link>
+                        <Link href="/jobs" className="text-primary hover:underline">
+                            ← Back to Job Listings
+                        </Link>
                         <h1 className="text-3xl font-bold text-primary">{job.title}</h1>
-                        <div className="w-24"></div> {/* Spacer for centering */}
+                        <div className="w-24" /> {/* Spacer */}
                     </nav>
                 </div>
             </header>
 
             <motion.main
                 className="flex-grow container mx-auto px-4 py-8"
-                initial={{ x: '-100%', opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
             >
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="md:col-span-2 space-y-6">
@@ -103,37 +116,14 @@ export function Page({ params }: { params: { id: string } }) {
                                 </div>
                                 <h3 className="text-lg font-semibold mb-2">Job Description</h3>
                                 <p className="mb-4">{job.description}</p>
-                                <h3 className="text-lg font-semibold mb-2">Requirements</h3>
-                                <ul className="list-disc list-inside mb-4">
-                                    {job.requirements}
-                                </ul>
-                                {/*<h3 className="text-lg font-semibold mb-2">Benefits</h3>
-                <ul className="list-disc list-inside">
-                  {job.benefits.map((benefit: string, index: number) => (
-                    <li key={index}>{benefit}</li>
-                  ))}
-                </ul>*/}
+                                {job.requirements && (
+                                    <>
+                                        <h3 className="text-lg font-semibold mb-2">Requirements</h3>
+                                        <p className="mb-4">{job.requirements}</p>
+                                    </>
+                                )}
                             </CardContent>
                         </Card>
-
-                        {/*<Card>
-              <CardHeader>
-                <CardTitle>About</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="mb-4"></p>
-                <div className="flex items-center mb-2">
-                  <UsersIcon className="w-5 h-5 mr-2 text-gray-600" />
-                  <span> employees</span>
-                </div>
-                <div className="flex items-center">
-                  <GlobeIcon className="w-5 h-5 mr-2 text-gray-600" />
-                  <a href={job.companyInfo.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
-                    {job.companyInfo.website}
-                  </a>
-                </div>
-              </CardContent>
-            </Card>*/}
                     </div>
 
                     <div>
@@ -144,10 +134,21 @@ export function Page({ params }: { params: { id: string } }) {
                                         <Button className="w-full mb-4">Apply Now</Button>
                                     </DialogTrigger>
                                     <DialogContent className="sm:max-w-[425px]">
-                                        <JobApplicationForm jobTitle={job.title} onSubmit={handleApply} />
+                                        <DialogHeader>
+                                            <DialogTitle>Apply for {job.title}</DialogTitle>
+                                        </DialogHeader>
+                                        <JobApplicationForm 
+                                            jobId={job.id} 
+                                            jobTitle={job.title}
+                                            userId="placeholder-user-id" // À remplacer par l'ID réel de l'utilisateur connecté
+                                        />
                                     </DialogContent>
                                 </Dialog>
-                                <Button variant="outline" className="w-full" onClick={() => router.push('/jobs')}>
+                                <Button 
+                                    variant="outline" 
+                                    className="w-full" 
+                                    onClick={() => router.push('/jobs')}
+                                >
                                     Back to Job Listings
                                 </Button>
                             </CardContent>
@@ -176,5 +177,5 @@ export function Page({ params }: { params: { id: string } }) {
                 </div>
             </footer>
         </div>
-    )
+    );
 }

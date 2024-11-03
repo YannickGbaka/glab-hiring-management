@@ -112,14 +112,22 @@ export function PostJobPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Form submitted. Current formData:", formData);
     if (validateForm()) {
       try {
         setIsGenerating(true);
-        console.log('Sending data to server:', formData);
-        const response = await axios.post('http://localhost:3001/api/jobs', formData);
+        
+        const jobData = {
+          ...formData,
+          jobType: formData.jobType.toLowerCase(),
+          company: "Not Specified",
+          salary: formData.salary || "Competitive salary",
+        };
+
+        console.log('Sending data to server:', jobData);
+        const response = await axios.post('http://localhost:3001/api/jobs', jobData);
         console.log('Job posted:', response.data);
-        setIsModalOpen(true); // Ouvrir le modal au lieu d'afficher une alerte
+        setIsModalOpen(true);
+        
         setFormData({
           title: '',
           description: '',
@@ -133,23 +141,18 @@ export function PostJobPage() {
         console.error('Error posting job:', error);
         if (axios.isAxiosError(error)) {
           if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
             console.error('Response data:', error.response.data);
             console.error('Response status:', error.response.status);
             console.error('Response headers:', error.response.headers);
             alert(`Error: ${error.response.status} - ${error.response.data.message || 'Unknown error'}`);
           } else if (error.request) {
-            // The request was made but no response was received
             console.error('No response received:', error.request);
             alert('Error: No response received from the server. Please check your network connection.');
           } else {
-            // Something happened in setting up the request that triggered an Error
             console.error('Error setting up the request:', error.message);
             alert(`Error: ${error.message}`);
           }
         } else {
-          // Non-Axios error
           console.error('Non-Axios error:', error);
           alert('An unexpected error occurred. Please try again.');
         }

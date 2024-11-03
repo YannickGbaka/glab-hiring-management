@@ -36,28 +36,31 @@ export function LoginComponent() {
     if (validateForm()) {
       setIsLoading(true)
       try {
-        const response = await fetch('http://192.168.1.101:3001/api/auth/login', {
+        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+        const response = await fetch(`${API_URL}/api/auth/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
           },
+          credentials: 'include',
+          mode: 'cors',
           body: JSON.stringify(formData),
         })
 
         if (response.ok) {
           const data = await response.json()
           console.log('Login successful:', data)
-          toast.success('Login successful!', {
+          toast.success('Connexion réussie!', {
             style: {
               background: '#4CAF50',
               color: '#fff',
             },
           })
-          // You might want to store the token or user data in localStorage or a state management solution here
           router.push('/dashboard')
         } else {
           const errorData = await response.json()
-          toast.error(errorData.message || 'Login failed. Please try again.', {
+          toast.error(errorData.message || 'Échec de la connexion. Veuillez réessayer.', {
             style: {
               background: '#F44336',
               color: '#fff',
@@ -66,17 +69,20 @@ export function LoginComponent() {
         }
       } catch (error) {
         console.error('Login error:', error)
-        toast.error('An error occurred. Please try again later.', {
-          style: {
-            background: '#FF9800',
-            color: '#fff',
-          },
-        })
+        toast.error(
+          'Impossible de se connecter au serveur. Veuillez vérifier votre connexion internet et que le serveur est bien démarré.',
+          {
+            style: {
+              background: '#FF9800',
+              color: '#fff',
+            },
+            duration: 5000,
+          }
+        )
       } finally {
         setIsLoading(false)
       }
     } else {
-      // Display validation errors
       Object.values(errors).forEach((error) => {
         toast.error(error, {
           style: {

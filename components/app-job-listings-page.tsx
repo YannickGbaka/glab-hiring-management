@@ -14,13 +14,14 @@ import { Header } from '@/components/Header'
 
 // Définissez une interface pour le type Job
 interface Job {
-  id: number;
+  id: string;
   title: string;
-  company: string;
+  company?: string;
   location: string;
   jobType: string;
-  salary: number;
+  salary: string;
   description: string;
+  requirements?: string;
 }
 
 export function FrontOfficeJobsComponent() {
@@ -35,32 +36,65 @@ export function FrontOfficeJobsComponent() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        setIsLoading(true)
-        const response = await axios.get('http://192.168.1.101:3001/api/jobs')
-        setJobs(response.data)
-        console.log(response.data)
-        setError(null)
+        setIsLoading(true);
+        const response = await axios.get('http://localhost:3001/api/jobs');
+        console.log('Raw API Response:', response.data);
+        
+        const jobsData = Array.isArray(response.data) ? response.data : response.data.jobs;
+        console.log('Processed Jobs Data:', jobsData);
+        
+        const validJobs = jobsData.filter((job: any) => {
+          const isValid = job.id && job.title;
+          if (!isValid) {
+            console.log('Invalid job entry:', job);
+          }
+          return isValid;
+        });
+        
+        console.log('Valid Jobs:', validJobs);
+        setJobs(validJobs);
+        setError(null);
       } catch (err) {
-        console.error('Error fetching jobs:', err)
-        setError('Failed to fetch jobs. Please try again later.')
+        console.error('Error fetching jobs:', err);
+        setError('Failed to fetch jobs. Please try again later.');
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    fetchJobs()
-  }, [])
+    fetchJobs();
+  }, []);
+
+  // Fonction utilitaire pour extraire la valeur numérique minimale du salaire
+  const extractMinSalary = (salaryString: string): number => {
+    const numbers = salaryString.match(/\d+/g);
+    return numbers ? parseInt(numbers[0]) : 0;
+  }
+
+  // Fonction utilitaire pour extraire la valeur numérique maximale du salaire
+  const extractMaxSalary = (salaryString: string): number => {
+    const numbers = salaryString.match(/\d+/g);
+    return numbers && numbers.length > 1 ? parseInt(numbers[1]) : parseInt(numbers?.[0] || '0');
+  }
 
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          job.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesLocation = selectedLocation === 'all' || job.location.includes(selectedLocation)
-    const matchesType = selectedType === 'all' || job.jobType === selectedType
-    const matchesSalary = job.salary >= salaryRange[0] && job.salary <= salaryRange[1]
+    const matchesSearch = (
+      job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (job.company?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+      job.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      false
+    );
 
-    return matchesSearch && matchesLocation && matchesType && matchesSalary
-  })
+    const matchesLocation = selectedLocation === 'all' || 
+      job.location?.toLowerCase().includes(selectedLocation.toLowerCase());
+
+    const matchesType = selectedType === 'all' || 
+      job.jobType?.toLowerCase() === selectedType.toLowerCase();
+
+    return matchesSearch && matchesLocation && matchesType;
+  });
+
+  console.log('Filtered Jobs:', filteredJobs)
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -155,7 +189,7 @@ export function FrontOfficeJobsComponent() {
                   </div>
                   <div className="flex items-center text-gray-600 mb-4">
                     <DollarSignIcon className="w-4 h-4 mr-2" />
-                    <span>${job.salary.toLocaleString()} per year</span>
+                    <span>{job.salary}</span>
                   </div>
                   <p className="text-sm text-gray-700">{job.description}</p>
                 </CardContent>

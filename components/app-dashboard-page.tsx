@@ -25,9 +25,9 @@ export default function Dashboard() {
           <span className="text-2xl font-bold text-primary">JobPostPro</span>
         </div>
         <nav className="hidden md:flex items-center space-x-4">
-          <Link href="/dashboard" className="text-gray-600 hover:text-primary">Dashboard</Link>
+          <Link href="/dashboard" className="text-gray-600 hover:text-primary">Tableau de bord</Link>
           <Link href="/backoffice/jobs" className="text-gray-600 hover:text-primary">Manage Jobs</Link>
-          <Link href="/post-job" className="text-gray-600 hover:text-primary">Post a Job</Link>
+          <Link href="/post-job" className="text-gray-600 hover:text-primary">Poster une offre</Link>
           <div className="relative ml-4">
             <Button
               variant="ghost"

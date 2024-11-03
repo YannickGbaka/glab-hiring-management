@@ -69,7 +69,7 @@ export function SignUp() {
         })
 
         if (response.ok) {
-          router.push('/dashboard')
+          router.push('/login')
         } else {
           const errorData = await response.json()
           alert(`Registration failed: ${errorData.message || 'Unknown error'}`)
