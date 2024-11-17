@@ -1,27 +1,57 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { BriefcaseIcon, PencilIcon, TrashIcon } from "lucide-react"
 
-// Mock data for job listings
-const initialJobs = [
-  { id: 1, title: 'Software Engineer', location: 'San Francisco, CA', type: 'Full-time', postedDate: '2023-06-01' },
-  { id: 2, title: 'Product Manager', location: 'New York, NY', type: 'Full-time', postedDate: '2023-06-02' },
-  { id: 3, title: 'UX Designer', location: 'Remote', type: 'Contract', postedDate: '2023-06-03' },
-  { id: 4, title: 'Data Analyst', location: 'Chicago, IL', type: 'Part-time', postedDate: '2023-06-04' },
-]
+// Définition du type Job
+interface Job {
+  id: string;
+  title: string;
+  location: string;
+  jobType: string;
+  description: string;
+  salary: string;
+  requirements: string;
+}
 
 export function Jobs() {
-  const [jobs, setJobs] = useState(initialJobs)
+  const [jobs, setJobs] = useState<Job[]>([])
   const [searchTerm, setSearchTerm] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
 
-  const handleDelete = (id) => {
+  useEffect(() => {
+    fetchJobs()
+  }, [])
+
+  const fetchJobs = async () => {
+    try {
+      const response = await fetch('http://localhost:3001/api/jobs')
+      const data = await response.json()
+      setJobs(data)
+    } catch (error) {
+      console.error('Error fetching jobs:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this job posting?')) {
-      setJobs(jobs.filter(job => job.id !== id))
+      try {
+        const response = await fetch(`http://localhost:3001/api/jobs/${id}`, {
+          method: 'DELETE',
+        })
+        
+        if (response.ok) {
+          setJobs(jobs.filter(job => job.id !== id))
+        }
+      } catch (error) {
+        console.error('Error deleting job:', error)
+      }
     }
   }
 
@@ -60,41 +90,49 @@ export function Jobs() {
           </Button>
         </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Job Title</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Posted Date</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredJobs.map((job) => (
-              <TableRow key={job.id}>
-                <TableCell>{job.title}</TableCell>
-                <TableCell>{job.location}</TableCell>
-                <TableCell>{job.type}</TableCell>
-                <TableCell>{job.postedDate}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm" asChild>
-                      <Link href={`/edit-job/${job.id}`}>
-                        <PencilIcon className="w-4 h-4 mr-1" />
-                        Edit
-                      </Link>
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(job.id)}>
-                      <TrashIcon className="w-4 h-4 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
-                </TableCell>
+        {isLoading ? (
+          <div className="text-center py-4">Loading jobs...</div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Job Title</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredJobs.map((job) => (
+                <TableRow key={job.id}>
+                  <TableCell>{job.title}</TableCell>
+                  <TableCell>{job.location}</TableCell>
+                  <TableCell>{job.jobType}</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/jobs/${job.id}/details`}>
+                          <BriefcaseIcon className="w-4 h-4 mr-1" />
+                          View Details
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/edit-job/${job.id}`}>
+                          <PencilIcon className="w-4 h-4 mr-1" />
+                          Edit
+                        </Link>
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(job.id)}>
+                        <TrashIcon className="w-4 h-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </main>
 
       <footer className="bg-gray-800 text-white py-8 mt-12">
