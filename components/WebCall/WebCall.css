@@ -1,0 +1,266 @@
+.webcall-container {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.call-controls {
+  margin: 20px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.call-button {
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background-color 0.3s ease;
+}
+
+.call-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.call-button.start {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.call-button.start:hover:not(:disabled) {
+  background-color: #45a049;
+}
+
+.call-button.end {
+  background-color: #f44336;
+  color: white;
+}
+
+.call-button.end:hover:not(:disabled) {
+  background-color: #da190b;
+}
+
+.error-message {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 10px 0;
+}
+
+.call-status {
+  text-align: center;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #e8f5e9;
+  border-radius: 4px;
+}
+
+.call-id {
+  font-size: 14px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.chat-container {
+  margin-top: 20px;
+  padding: 15px;
+  min-height: 400px;
+  height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-container:empty::before {
+  content: "En attente de la transcription...";
+  text-align: center;
+  color: #666;
+  padding: 20px;
+  font-style: italic;
+}
+
+.chat-message {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 8px;
+  max-width: 80%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-message.agent {
+  background-color: #d1e7ff;
+  border-left: 4px solid #007bff;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  align-self: flex-start;
+  margin-right: auto;
+}
+
+.chat-message.user {
+  background-color: #ffe7d1;
+  border-right: 4px solid #ff6b00;
+  border-left: none;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  align-self: flex-end;
+  margin-left: auto;
+}
+
+.message-header {
+  font-weight: bold;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.message-header.agent {
+  text-align: left;
+}
+
+.message-header.user {
+  text-align: right;
+}
+
+.message-content {
+  font-size: 14px;
+}
+
+.message-content.user {
+  text-align: right;
+}
+
+.message-content.agent {
+  text-align: left;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.details-button,
+.download-button {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.details-button {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.download-button {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.details-button:hover,
+.download-button:hover {
+  opacity: 0.9;
+}
+
+.call-details {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #e1e1e1;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.message {
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.message.agent {
+  background-color: #e3f2fd;
+}
+
+.message.user {
+  background-color: #f5f5f5;
+}
+
+.summary {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e1e1e1;
+}
+
+.summary h4 {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.history-button {
+  background-color: #6366f1;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.history-button:hover {
+  background-color: #4f46e5;
+}
+
+.call-history-content {
+  padding: 1.5rem;
+}
+
+.transcript-section {
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.message {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.message.agent {
+  background-color: #e0e7ff;
+}
+
+.message.user {
+  background-color: #f3f4f6;
+}
+
+.summary-section {
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: 0.5rem;
+}
+
+.download-button {
+  background-color: #10b981;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.download-button:hover {
+  background-color: #059669;
+}
+  
