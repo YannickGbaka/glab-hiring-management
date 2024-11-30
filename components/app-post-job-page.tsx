@@ -126,6 +126,18 @@ export function PostJobPage() {
         console.log('Sending data to server:', jobData);
         const response = await axios.post('http://localhost:3001/api/jobs', jobData);
         console.log('Job posted:', response.data);
+
+        // Générer le quiz après la création de l'offre
+        try {
+          const quizResponse = await axios.post('http://localhost:3001/api/quizzes/generate', {
+            jobId: response.data.id, // Utilise l'ID du job créé
+            difficulty: "medium"
+          });
+          console.log('Quiz generated:', quizResponse.data);
+        } catch (quizError) {
+          console.error('Error generating quiz:', quizError);
+        }
+
         setIsModalOpen(true);
         
         setFormData({
