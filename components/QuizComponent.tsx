@@ -1,15 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from "./ui/button"
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group"
 import { Label } from "./ui/label"
+import { Progress } from "./ui/progress"
 
 interface Question {
-    id: number;
+    id: string;
     question: string;
     options: string[];
-    correctAnswer?: string;
+    correctAnswer: string;
 }
 
 interface QuizComponentProps {
@@ -19,27 +20,68 @@ interface QuizComponentProps {
 }
 
 export function QuizComponent({ questions, jobId, userId }: QuizComponentProps) {
-    const [answers, setAnswers] = useState<{ [key: number]: string }>({});
+    const [answers, setAnswers] = useState<{ [key: string]: string }>({});
     const [submitted, setSubmitted] = useState(false);
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(-1); // -1 signifie que le quiz n'a pas commencé
+    const [timeLeft, setTimeLeft] = useState<number>(30);
+    const [quizStarted, setQuizStarted] = useState(false);
 
-    const handleAnswerChange = (questionId: number, answer: string) => {
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        
+        if (quizStarted && currentQuestionIndex >= 0 && timeLeft > 0) {
+            timer = setInterval(() => {
+                setTimeLeft((prev) => {
+                    if (prev <= 1) {
+                        handleNextQuestion();
+                        return 30;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+
+        return () => {
+            if (timer) clearInterval(timer);
+        };
+    }, [quizStarted, currentQuestionIndex, timeLeft]);
+
+    const startQuiz = () => {
+        setQuizStarted(true);
+        setCurrentQuestionIndex(0);
+        setTimeLeft(30);
+    };
+
+    const handleAnswerChange = (questionId: string, answer: string) => {
         setAnswers(prev => ({
             ...prev,
             [questionId]: answer
         }));
     };
 
+    const handleNextQuestion = () => {
+        if (currentQuestionIndex < questions.length - 1) {
+            setCurrentQuestionIndex(prev => prev + 1);
+            setTimeLeft(30);
+        } else {
+            handleSubmit();
+        }
+    };
+
     const handleSubmit = async () => {
         try {
-            const response = await fetch(`http://localhost:3001/api/quizzes/job/${jobId}`, {
-                method: 'GET',
+            const response = await fetch(`http://localhost:3001/api/quizzes/job/${jobId}/submit`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
                     jobId,
                     userId,
-                    answers,
+                    answers: Object.entries(answers).map(([questionId, answer]) => ({
+                        questionId,
+                        selectedAnswer: answer
+                    })),
                     submittedAt: new Date().toISOString()
                 }),
             });
@@ -65,31 +107,60 @@ export function QuizComponent({ questions, jobId, userId }: QuizComponentProps) 
         );
     }
 
+    if (!quizStarted) {
+        return (
+            <div className="text-center py-8">
+                <h2 className="text-xl font-bold mb-4">Êtes-vous prêt à commencer le quiz ?</h2>
+                <p className="mb-4">Vous aurez 30 secondes pour répondre à chaque question.</p>
+                <Button onClick={startQuiz} className="px-8 py-4">
+                    Commencer le Quiz
+                </Button>
+            </div>
+        );
+    }
+
+    if (currentQuestionIndex === -1 || currentQuestionIndex >= questions.length) {
+        return null;
+    }
+
+    const currentQuestion = questions[currentQuestionIndex];
+
     return (
         <div className="space-y-8">
-            {questions.map((question) => (
-                <div key={question.id} className="p-6 bg-white rounded-lg shadow">
-                    <h3 className="text-lg font-semibold mb-4">{question.question}</h3>
-                    <RadioGroup
-                        value={answers[question.id]}
-                        onValueChange={(value) => handleAnswerChange(question.id, value)}
-                    >
-                        {question.options.map((option, index) => (
-                            <div key={index} className="flex items-center space-x-2">
-                                <RadioGroupItem value={option} id={`q${question.id}-${index}`} />
-                                <Label htmlFor={`q${question.id}-${index}`}>{option}</Label>
-                            </div>
-                        ))}
-                    </RadioGroup>
-                </div>
-            ))}
+            <div className="flex justify-between items-center mb-4">
+                <span className="font-bold">
+                    Question {currentQuestionIndex + 1}/{questions.length}
+                </span>
+                <span className="text-red-600 font-bold">
+                    Temps restant: {timeLeft}s
+                </span>
+            </div>
+
+            <Progress value={(timeLeft / 30) * 100} className="w-full h-2" />
+
+            <div className="p-6 bg-white rounded-lg shadow">
+                <h3 className="text-lg font-semibold mb-4">{currentQuestion.question}</h3>
+                <RadioGroup
+                    value={answers[currentQuestion.id]}
+                    onValueChange={(value) => handleAnswerChange(currentQuestion.id, value)}
+                >
+                    {currentQuestion.options.map((option, index) => (
+                        <div key={index} className="flex items-center space-x-2 mb-4">
+                            <RadioGroupItem 
+                                value={index.toString()} 
+                                id={`q${currentQuestion.id}-${index}`} 
+                            />
+                            <Label htmlFor={`q${currentQuestion.id}-${index}`}>{option}</Label>
+                        </div>
+                    ))}
+                </RadioGroup>
+            </div>
 
             <Button 
-                onClick={handleSubmit}
-                disabled={Object.keys(answers).length !== questions.length}
+                onClick={handleNextQuestion}
                 className="w-full"
             >
-                Soumettre le quiz
+                {currentQuestionIndex === questions.length - 1 ? 'Terminer' : 'Question suivante'}
             </Button>
         </div>
     );

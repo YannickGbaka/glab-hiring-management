@@ -260,10 +260,9 @@ export function JobDetailsPage() {
                                         variant="outline"
                                         size="sm"
                                         onClick={() => {
-                                            // Copier le lien dans le presse-papier
+                                            // Modifier le lien pour pointer vers la page du quiz
                                             const quizLink = `${window.location.origin}/quiz/${params.id}/${application.userId}`;
                                             navigator.clipboard.writeText(quizLink);
-                                            // Vous pourriez ajouter une notification pour informer l'utilisateur que le lien a été copié
                                             alert('Lien du quiz copié dans le presse-papier !');
                                         }}
                                     >
